@@ -1,5 +1,6 @@
 from diffusers import DiffusionPipeline, StableDiffusionXLImg2ImgPipeline
 from PIL import Image
+from dbManager import DbManager
 import torch
 import os
 
@@ -90,7 +91,7 @@ class Dissertation:
                 boxes=input_dict['boxes'],
                 gligen_scheduled_sampling_beta=0.4,
                 output_type="pil",
-                num_inference_steps=10,
+                num_inference_steps=25,
                 lmd_guidance_kwargs={}
         ).images
         img = image[0]
