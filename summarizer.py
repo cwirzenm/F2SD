@@ -38,21 +38,24 @@ class Summarizer:
         return self.generate(input)
 
     def populate_db(self):
+        genre = 'fiction'
+        title = 'The Great Gatsby'
+
         # genres = os.listdir('tests')
         # for genre in genres:
-        genre = 'fiction'
-        titles = os.listdir(f'tests/{genre}')
-        for title in titles:
-            print(f'Reading {title}...')
-            pages = os.listdir(f'tests/{genre}/{title}')
-            if not pages: continue
-            pages.sort(key=lambda x: int(x.split('_')[-1].split('.')[0]))
-            for page in pages:
-                print(f'    Reading {page}...')
-                with open(f'tests/{genre}/{title}/{page}', 'r', encoding="utf-8") as f: text = "".join(f.readlines())
-                summary = self.generate_summary(text)
-                prompt = self.generate_layout(summary)
-                self.dbManager.insert(title, page, text, summary, prompt)
+        # titles = os.listdir(f'tests/{genre}')
+        # for title in titles:
+
+        print(f'Reading {title}...')
+        pages = os.listdir(f'tests/{genre}/{title}')
+        # if not pages: continue
+        pages.sort(key=lambda x: int(x.split('_')[-1].split('.')[0]))
+        for page in pages:
+            print(f'    Reading {page}...')
+            with open(f'tests/{genre}/{title}/{page}', 'r', encoding="utf-8") as f: text = "".join(f.readlines())
+            summary = self.generate_summary(text)
+            prompt = self.generate_layout(summary)
+            self.dbManager.emit(title, int(page.split('_')[-1].split('.')[0]), text, summary, prompt)
 
 
 s = Summarizer()

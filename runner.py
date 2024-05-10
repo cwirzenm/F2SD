@@ -1,6 +1,6 @@
 from diffusers import DiffusionPipeline, StableDiffusionXLImg2ImgPipeline
-from PIL import Image
 from dbManager import DbManager
+from PIL import Image
 import torch
 import os
 
@@ -20,7 +20,7 @@ class Dissertation:
         self.init_sdxl_refiner()
 
         # init database
-        self.init_mongoDb()
+        self.dbManager = DbManager()
 
     @staticmethod
     def torch_test():
@@ -48,9 +48,6 @@ class Dissertation:
         )
         if offload_model: self.sdxl_refiner.enable_model_cpu_offload()
         else: self.sdxl_refiner.to("cuda")
-
-    def init_mongoDb(self):
-        pass
 
     def sdxl_refine(self, image, input_dict, refine_seed=None, refinement_step_ratio=0.5) -> Image:
         overall_prompt = input_dict['prompt']
