@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+import os
 
 
 class DbManager:
@@ -10,7 +11,7 @@ class DbManager:
     def get(self, query):
         return [x for x in self.data.find(query)]
 
-    def emit(self, book, page_no, page_text, page_summary, prompt):
+    def emit(self, book, page_no, page_text, page_summary='', prompt=''):
         query = {
                 'book': book,
                 'page_number': page_no
@@ -35,3 +36,25 @@ class DbManager:
             x = self.data.insert_one(insert)
 
         print(x)
+
+    def populate_from_dir(self, genre, title):
+        print(f'Reading {title}...')
+        pages = os.listdir(f'tests/{genre}/{title}')
+        # pages.sort(key=lambda x: int(x.split('_')[-1].split('.')[0]))
+
+        for page in pages:
+            print(f'    Reading {page}...')
+            with open(f'tests/{genre}/{title}/{page}', 'r', encoding="utf-8") as f: text = "".join(f.readlines())
+            self.emit(title, page.removesuffix('.txt'), text)
+
+
+if __name__ == "__main__":
+    dbManager = DbManager()
+
+    genre = 'fiction'
+    title = 'Tristan and Iseult'
+    dbManager.populate_from_dir(genre, title)
+
+    genre = 'drama'
+    title = 'Hamlet'
+    dbManager.populate_from_dir(genre, title)
