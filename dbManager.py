@@ -8,7 +8,7 @@ class DbManager:
         self.data = db['data']
 
     def get(self, query):
-        return self.data.find_one(query)
+        return [x for x in self.data.find(query)]
 
     def emit(self, book, page_no, page_text, page_summary, prompt):
         query = {

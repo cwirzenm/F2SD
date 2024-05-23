@@ -7,6 +7,7 @@ The bottom-right corner has coordinate [512, 512]. The bounding boxes should not
 in the format of (object name, [top-left x coordinate, top-left y coordinate, box width, box height]) and should not include more than one object. 
 Do not put objects that are already provided in the bounding boxes into the background prompt. Do not include non-existing or excluded objects in the 
 background prompt. Use "A realistic scene" as the background prompt if no background is given in the prompt. If needed, you can make reasonable guesses. 
+Don't use quotes (') or double quotes (") inside the strings.
 Please refer to the example below for the desired format.
 
 Caption: A realistic image of landscape scene depicting a green car parking on the left of a blue truck, with a red air balloon and a bird in the sky

@@ -4,7 +4,7 @@ from dbManager import DbManager
 from prompt_template import LAYOUT_PROMPT_TEMPLATE, SUMMARY_PROMPT_TEMPLATE
 
 
-class Summarizer:
+class Llama3_summarizer:
     def __init__(self):
         self.token = None
         self._api_test()
@@ -58,5 +58,5 @@ class Summarizer:
             self.dbManager.emit(title, int(page.split('_')[-1].split('.')[0]), text, summary, prompt)
 
 
-s = Summarizer()
+s = Llama3_summarizer()
 s.populate_db()

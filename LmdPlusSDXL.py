@@ -2,10 +2,11 @@ from diffusers import DiffusionPipeline, StableDiffusionXLImg2ImgPipeline
 from dbManager import DbManager
 from PIL import Image
 import torch
+import datetime
 import os
 
 
-class Dissertation:
+class LmdPlusSDXL:
     def __init__(self):
         # init variables
         self.lmd_pipe = None
@@ -60,13 +61,15 @@ class Dissertation:
 
         return output
 
-    def save_output(self, img: Image, parent_dir: str, filename: str):
+    @staticmethod
+    def save_output(img: Image, parent_dir: str, page: int):
         # TODO make it so that it doesn't overwrite
         if not os.path.exists(parent_dir): os.makedirs(parent_dir)
+        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        filename = f"page_{page}_{timestamp}.jpg"
         img.save(os.path.join(parent_dir, filename))
-        print()
 
-    def parse_input(self, prompt, response):
+    def parse_input(self, prompt, response: str):
         phrases, boxes, bg_prompt, neg_prompt = self.lmd_pipe.parse_llm_response(response)
         return {
             "prompt": prompt,
@@ -75,43 +78,37 @@ class Dissertation:
             "boxes": boxes,
         }
 
-    def run_pipeline(self):
-        # todo read from db
+    def get_test_data(self, query):
+        return self.dbManager.get(query)
+
+    def run_pipeline(self, title):
         prompt = "a waterfall and a modern high speed train in a beautiful forest with fall foliage."
         response = """[('a waterfall', [100, 50, 200, 450]), ('a beautiful deer', [350, 250, 150, 200])] Background prompt: A dense forest surrounded by mountains Negative prompt:"""
 
-        input_dict = self.parse_input(prompt, response)
-        image = self.lmd_pipe(
-                prompt=prompt,
-                negative_prompt=input_dict['neg_prompt'],
-                phrases=input_dict['phrases'],
-                boxes=input_dict['boxes'],
-                gligen_scheduled_sampling_beta=0.4,
-                output_type="pil",
-                num_inference_steps=25,
-                lmd_guidance_kwargs={}
-        ).images
-        img = image[0]
-        refined_img = self.sdxl_refine(img, input_dict)
-        return refined_img
+        data = self.get_test_data({'book': title, 'page_number': 133})
 
-    def main(self):
-        genres = os.listdir('tests')
-        for genre in genres:
-            titles = os.listdir(f'tests/{genre}')
-            for title in titles:
-                print(f'Reading {title}...')
-                pages = os.listdir(f'tests/{genre}/{title}')
-                if not pages: continue
-                pages.sort(key=lambda x: int(x.split('_')[-1].split('.')[0]))
-                for page in pages:
-                    print(f'    Reading {page}...')
-                    with open(f'tests/{genre}/{title}/{page}', 'r', encoding="utf-8") as f: text = f.readlines()
-                    print(text)
-                    output: Image = self.run_pipeline()
-                    output.show()
-                    self.save_output(output, f"output/{genre}/{title}", f"{page.split('.')[0]}.jpg")
+        for test in data:
+            # test2 = {
+            #         'page_summary': prompt,
+            #         'prompt': response
+            # }
+
+            input_dict = self.parse_input(test['page_summary'], test['prompt'])
+            img = self.lmd_pipe(
+                    prompt=test['prompt'],
+                    negative_prompt=input_dict['neg_prompt'],
+                    phrases=input_dict['phrases'],
+                    boxes=input_dict['boxes'],
+                    gligen_scheduled_sampling_beta=0.4,
+                    output_type="pil",
+                    num_inference_steps=25,
+                    lmd_guidance_kwargs={}
+            ).images[0]
+            refined_img = self.sdxl_refine(img, input_dict)
+
+            refined_img.show()
+            self.save_output(refined_img, f"output/fiction/{title}", test['page_number'])
 
 
-project = Dissertation()
-project.main()
+project = LmdPlusSDXL()
+project.run_pipeline('The Great Gatsby')
