@@ -10,7 +10,7 @@ import os
 
 class TextToImagePipeline:
 
-    def __init__(self, gpt_model="gpt-4", image_model="dall-e-3", image_size="1024x1024"):
+    def __init__(self, gpt_model="gpt-3.5-turbo", image_model="dall-e-2", image_size="1024x1024"):
         # init client
         self.client = OpenAI()
 
