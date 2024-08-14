@@ -25,6 +25,7 @@ class CustomDataset(Dataset):
 
     @staticmethod
     def default_transform() -> transforms.Compose:
+        """Stack of transformations for dataset preprocessing"""
         return transforms.Compose([
                 functools.partial(Image.fromarray, mode='RGB'),
                 transforms.Resize((64, 64)),
