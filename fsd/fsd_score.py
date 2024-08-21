@@ -108,8 +108,14 @@ def fsd_score(ground_truth, generated, batch_size=32, dims=512, cuda=True):
 if __name__ == "__main__":
     from fsd.dataset import CustomDataset
 
-    test1_dataset = CustomDataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test1")
-    test2_dataset = CustomDataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test2")
+    set1_dataset1 = CustomDataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test1\\set_1")
+    set2_dataset1 = CustomDataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test1\\set_2")
 
-    fsd_value = fsd_score(test1_dataset, test2_dataset)
-    print('FSD:', fsd_value)
+    fsd_value1 = fsd_score(set1_dataset1, set2_dataset1)
+    print('Test 1 FSD:', fsd_value1)
+
+    set1_dataset2 = CustomDataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test2\\set_1")
+    set2_dataset2 = CustomDataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test2\\set_2")
+
+    fsd_value2 = fsd_score(set1_dataset2, set2_dataset2)
+    print('Test 2 FSD:', fsd_value2)
