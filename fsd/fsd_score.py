@@ -1,4 +1,5 @@
 """
+todo convert to a class
 TODO DOCUMENTATION
 Calculates the Fréchet Story Distance (FSD) to evaluate consistency in the sequence of images
 
