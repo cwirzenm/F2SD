@@ -42,7 +42,7 @@ class BackGroundSubtraction:
         """2. Subtract the generated mask from the input image to get the foreground"""
 
         # add an alpha channel to the image
-        b, g, r = cv2.split(np.array(img).astype('uint8').transpose((1, 2, 0)))
+        r, g, b = cv2.split(np.array(img).astype('uint8').transpose((1, 2, 0)))
         a = np.ones(self.bin_mask.shape, dtype='uint8') * 255
         alpha_img = cv2.merge([b, g, r, a], 4)
 
@@ -61,7 +61,27 @@ class BackGroundSubtraction:
 
 if __name__ == '__main__':
     backsub = BackGroundSubtraction()
-    img = backsub.read_image("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test2\\set_2\\im_2.png")
+    img = backsub.read_image("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test4\\1.png")
+    foreground = backsub(img)
+    cv2.imshow('fg', foreground)
+    cv2.waitKey(0)
+
+    img = backsub.read_image("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test4\\2.png")
+    foreground = backsub(img)
+    cv2.imshow('fg', foreground)
+    cv2.waitKey(0)
+
+    img = backsub.read_image("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test4\\3.png")
+    foreground = backsub(img)
+    cv2.imshow('fg', foreground)
+    cv2.waitKey(0)
+
+    img = backsub.read_image("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test4\\4.png")
+    foreground = backsub(img)
+    cv2.imshow('fg', foreground)
+    cv2.waitKey(0)
+
+    img = backsub.read_image("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test4\\5.png")
     foreground = backsub(img)
     cv2.imshow('fg', foreground)
     cv2.waitKey(0)
