@@ -1,6 +1,7 @@
 import numpy as np
 from ultralytics.utils.plotting import Annotator, colors
 from ultralytics import YOLO
+from torchvision.transforms.v2 import Compose, Normalize, ToDtype, Resize
 import matplotlib.pyplot as plt
 import torch
 import cv2
@@ -8,20 +9,33 @@ import os
 
 
 class YoloV8X:
-    def __init__(self):
+    def __init__(self, return_cropped_frame=False):
         self.detection_model = YOLO('lib/yolov8x.pt')
         self.detection_model.to('cuda')
 
         self.embedding_model = YOLO('lib/yolov8x.pt')
         self.embedding_model.to('cuda')
 
+        self.return_cropped_frame = return_cropped_frame
+
         # set model parameters
         self.detection_model.multi_label = False  # NMS multiple labels per box
 
-    def __call__(self, frames, show=False, return_cropped_frames=True):
+    def __call__(self, frame_and_path: tuple, show=False):
+        preprocess = Compose([
+                ToDtype(torch.float32, scale=True),
+                Resize((640, 640), antialias=True),
+                # Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
+
+        frame = frame_and_path[0]
+        frame = preprocess(frame).unsqueeze(0)
+
+        path = frame_and_path[1]
+
         # inference with test time augmentation
-        results = self.detection_model(
-                frames,
+        result = self.detection_model(
+                frame,
                 imgsz=1280,
                 augment=True,
                 conf=0.6,
@@ -29,33 +43,29 @@ class YoloV8X:
                 max_det=100,
                 visualize=True,
                 # classes= todo list of classes
-        )
+        )[0]
 
         # show detection bounding boxes on image
-        if show:
-            for result in results:
-                result.show()
+        if show: result.show()
 
-        object_data = []
-        cropped_frames = []
-        for result in results:
-            boxes = result.boxes.data
-            scores = result.boxes.conf
-            categories = result.boxes.cls
+        boxes = result.boxes.data
+        scores = result.boxes.conf
+        categories = result.boxes.cls
+
+        if boxes.shape[0] == 0:
+            cropped_frame = frame
+        else:
             areas = [(int(a[3]) - int(a[1])) * (int(a[2]) - int(a[0])) for a in boxes]
-
-            object_data.append((boxes, scores, categories, areas))
 
             # picking the object with the highest box area
             main_idx = int(areas.index(max(areas)))
             box = boxes[main_idx]
 
             # crop image and return
-            crop_obj = cv2.imread(result.path)[int(box[1]): int(box[3]), int(box[0]): int(box[2])]
-            cropped_frames.append(crop_obj)
-            # plt.imshow(crop_obj[..., ::-1])
+            cropped_frame = cv2.imread(path)[int(box[1]): int(box[3]), int(box[0]): int(box[2])]
+            # plt.imshow(cropped_frame[..., ::-1])
 
-        if return_cropped_frames: return cropped_frames
+        if self.return_cropped_frame: return cropped_frame
 
         # cropped_frames = np.array(cropped_frames)
 
@@ -74,13 +84,13 @@ class YoloV8X:
         # rerun interference with a cropped image
         # inference with test time augmentation
         embeddings = self.embedding_model(
-                cropped_frames,
+                cropped_frame,
                 imgsz=256,
                 agnostic_nms=True,
                 retina_masks=True,
-                embed=[20, 21]
-        )
-        embeddings = [e.cpu().numpy() for e in embeddings]
+                embed=[21]
+        )[0]
+        embeddings = embeddings.cpu().numpy()
         return embeddings
 
     # def get_forward_hook(self, layer):
