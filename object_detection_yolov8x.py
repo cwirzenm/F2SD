@@ -18,7 +18,7 @@ class YoloV8X:
         # set model parameters
         self.detection_model.multi_label = False  # NMS multiple labels per box
 
-    def __call__(self, frames, show=True):
+    def __call__(self, frames, show=False, return_cropped_frames=True):
         # inference with test time augmentation
         results = self.detection_model(
                 frames,
@@ -55,6 +55,8 @@ class YoloV8X:
             cropped_frames.append(crop_obj)
             # plt.imshow(crop_obj[..., ::-1])
 
+        if return_cropped_frames: return cropped_frames
+
         # cropped_frames = np.array(cropped_frames)
 
         # self.activations = {}
@@ -74,9 +76,11 @@ class YoloV8X:
         embeddings = self.embedding_model(
                 cropped_frames,
                 imgsz=256,
-                embed=[247, 266, 268]
+                agnostic_nms=True,
+                retina_masks=True,
+                embed=[20, 21]
         )
-        embeddings = [embeddings[0].cpu().numpy().flatten()] + [e.cpu().numpy().flatten() for e in embeddings[1]]
+        embeddings = [e.cpu().numpy() for e in embeddings]
         return embeddings
 
     # def get_forward_hook(self, layer):
@@ -103,10 +107,13 @@ if __name__ == '__main__':
     # model(gen_path)
 
     # Geralt of Rivia
-    ref_path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test2/set_1/im_1.png'
-    gen_path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test2/set_1/im_2.png'
-    x = model(ref_path)
-    y = model(gen_path)
+    # ref_path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test2/set_1/im_1.png'
+    # gen_path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test2/set_1/im_2.png'
+    # x = model(ref_path)
+    # y = model(gen_path)
+
+    path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test2/set_1/'
+    e = model(path)
 
     # # Flintstones
     # ref_path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/temporalstory/gt_flintstones/row-3-column-2.png'

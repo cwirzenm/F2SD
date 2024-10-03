@@ -3,14 +3,13 @@ import torch
 from torchvision.io import read_image, ImageReadMode
 from torchvision.transforms.v2 import Resize, Compose, ToImage
 from torch.utils.data import Dataset
-from test.background_sub import BackGroundSubtraction
 
 
 class CustomDataset(Dataset):
     def __init__(self, img_dir, backsub=False, verbose=False):
         self.img_dir = img_dir
         self.frames = [[f for f in os.listdir(img_dir) if os.path.isfile(os.path.join(img_dir, f))]]
-        self.backsub = BackGroundSubtraction() if backsub else lambda x: x
+        self.backsub = backsub if backsub else lambda x: x
         self.verbose = verbose
 
     def __len__(self): return len(self.frames)

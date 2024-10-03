@@ -19,7 +19,7 @@ pip install matplotlib
 pip install seaborn
 conda install -c anaconda ipykernel
 python -m ipykernel install --user --name=conda310diss
-pip install dlib
+pip install ultralytics
 ```
 
 

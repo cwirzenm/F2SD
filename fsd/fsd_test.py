@@ -1,7 +1,15 @@
 from fsd_score import fsd_score
 from dataset import CustomDataset
+from background_sub import BackGroundSubtraction
+
 
 if __name__ == '__main__':
+    # # Geralt of Rivia
+    # path1 = CustomDataset('C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test2/set_1/', backsub=BackGroundSubtraction())
+    # path2 = CustomDataset('C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test2/set_2/', backsub=BackGroundSubtraction())
+    # fsd_geralt = fsd_score(path1, path2)
+    # print('FSD score:', fsd_geralt)
+
     storydalle_gen_pororo = CustomDataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\storydalle\\gen_pororo")
     storydalle_gt_pororo = CustomDataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\storydalle\\gt_pororo")
     fsd_storydalle_pororo = fsd_score(storydalle_gt_pororo, storydalle_gen_pororo)
@@ -34,9 +42,9 @@ if __name__ == '__main__':
     fsd_temporalstory_flintstones = fsd_score(temporalstory_gt_flintstones, temporalstory_gen_flintstones)
     print('TemporalStory FSD score on FlintstonesSV:', fsd_temporalstory_flintstones)
 
-    # print()
-    #
-    # arldm_gen_vist = CustomDataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\arldm\\gen_vist")
-    # arldm_gt_vist = CustomDataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\arldm\\gt_vist")
-    # fsd_arldm_vist = fsd_score(arldm_gt_vist, arldm_gen_vist)
-    # print('AR-LDM FSD score on VIST-SIS:', fsd_arldm_vist)
+    print()
+
+    arldm_gen_vist = CustomDataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\arldm\\gen_vist")
+    arldm_gt_vist = CustomDataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\arldm\\gt_vist")
+    fsd_arldm_vist = fsd_score(arldm_gt_vist, arldm_gen_vist)
+    print('AR-LDM FSD score on VIST-SIS:', fsd_arldm_vist)

@@ -61,7 +61,7 @@ class BackGroundSubtraction:
 
 if __name__ == '__main__':
     backsub = BackGroundSubtraction()
-    img = backsub.read_image("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test4\\1.png")
+    img = backsub.read_image("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test2\\set_1\\im_1.png")
     foreground = backsub(img)
     cv2.imshow('fg', foreground)
     cv2.waitKey(0)

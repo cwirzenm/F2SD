@@ -5,8 +5,8 @@ import os
 
 def cosine_similarity(vec1, vec2):
     # Ensure that the input vectors are numpy arrays
-    vec1 = np.array(vec1[0])
-    vec2 = np.array(vec2[0])
+    vec1 = np.array(vec1)
+    vec2 = np.array(vec2)
 
     # Calculate the dot product of the two vectors
     dot_product = np.dot(vec1, vec2)
@@ -29,9 +29,12 @@ if __name__ == '__main__':
     model = YoloV8X()
 
     # Geralt of Rivia
-    ref_path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test2/set_1/im_1.png'
-    gen_path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test2/set_1/im_2.png'
-    ref_embeddings = model(ref_path)
-    gen_embeddings = model(gen_path)
-    similarity = cosine_similarity(ref_embeddings, gen_embeddings)
-    print(f"Cosine Similarity: {similarity}")
+    path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test2/set_1/'
+    embeddings = model(path, show=False, return_cropped_frames=False)
+    similarity = cosine_similarity(embeddings[0], embeddings[1])
+    print(f"Geralt Cosine Similarity: {similarity}")
+
+    path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test2/set_2/'
+    embeddings = model(path, show=False, return_cropped_frames=False)
+    similarity = cosine_similarity(embeddings[0], embeddings[1])
+    print(f"Fake Geralt Cosine Similarity: {similarity}")
