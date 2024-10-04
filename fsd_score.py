@@ -106,15 +106,13 @@ def fsd_score(data: tuple[Dataset, Dataset], batch_size=32, dims=512, cuda=True)
     return fid_value
 
 
-def fsd_score_without_gt(root: str) -> float:
+def fsd_score_without_gt(root: str, **kwargs) -> float:
     results: list[float] = []
     for dir in os.listdir(root):
-        dataset_generator = DatasetGenerator(os.path.join(root, dir))
-        fids: list[float] = []
-        for dataset in dataset_generator:
-            fid: float = fsd_score(dataset)
-            fids.append(fid)
-        results.append(np.mean(fids))
+        with DatasetGenerator(os.path.join(root, dir), **kwargs) as tup:
+            fid: float = fsd_score(tup)
+            results.append(np.mean(fid))
+            print(f"{dir} FSD score: {np.mean(fid)}")
     return np.mean(results)
 
 

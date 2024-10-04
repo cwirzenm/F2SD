@@ -7,11 +7,12 @@ from torch.utils.data import Dataset
 
 
 class CustomDataset(Dataset):
-    def __init__(self, img_dir, backsub=False, verbose=False):
+    def __init__(self, img_dir, res=(64, 64), backsub=False, verbose=False):
         self.img_dir = img_dir
-        self.frames = [[f for f in os.listdir(img_dir) if os.path.isfile(os.path.join(img_dir, f))]]
+        self.res = res
         self.backsub = backsub if backsub else lambda x, y: y
         self.verbose = verbose
+        self.frames = [[f for f in os.listdir(img_dir) if os.path.isfile(os.path.join(img_dir, f))]]
 
     def __str__(self): return str(self.frames)
 
@@ -56,7 +57,7 @@ class CustomDataset(Dataset):
                 ToDtype(torch.float32, scale=True),
 
                 # R(2+1)D likes 64x64 inputs
-                Resize((64, 64), antialias=True),
+                Resize(self.res, antialias=True),
                 self.print_shape,
 
                 # trim excessive channels
@@ -70,7 +71,6 @@ class CustomDataset(Dataset):
 if __name__ == "__main__":
     test1_dataset = CustomDataset(
             "C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test2\\set_2",
-            backsub=False,
             verbose=True
     )
     a = [b for b in test1_dataset]
