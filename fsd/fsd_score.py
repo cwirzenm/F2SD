@@ -3,14 +3,12 @@ Calculates the Fréchet Story Distance (FSD) to evaluate consistency in the sequ
 
 Code adapted from https://github.com/bioinf-jku/TTUR
 """
-import os
 import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset
 from scipy import linalg
 from residual2plus1 import R2Plus1D
-from dataset_generator import DatasetGenerator
 
 
 def _compute_activation(vids, model, batch_size=32, dims=512, cuda=True):
@@ -104,16 +102,6 @@ def fsd_score(data: tuple[Dataset, Dataset], batch_size=32, dims=512, cuda=True)
     fid_value = _calculate_frechet_distance(m1, s1, m2, s2)
 
     return fid_value
-
-
-def fsd_score_without_gt(root: str, **kwargs) -> float:
-    results: list[float] = []
-    for dir in os.listdir(root):
-        with DatasetGenerator(os.path.join(root, dir), **kwargs) as tup:
-            fid: float = fsd_score(tup)
-            results.append(np.mean(fid))
-            print(f"{dir} FSD score: {np.mean(fid)}")
-    return np.mean(results)
 
 
 if __name__ == "__main__":

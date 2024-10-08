@@ -12,7 +12,7 @@ class CustomDataset(Dataset):
         self.res = res
         self.backsub = backsub if backsub else lambda x, y: y
         self.verbose = verbose
-        self.frames = [[f for f in os.listdir(img_dir) if os.path.isfile(os.path.join(img_dir, f))]]
+        self.frames = [[os.path.join(r, x) for x in f] for r, d, f in os.walk(img_dir) if f]
 
     def __str__(self): return str(self.frames)
 
@@ -20,7 +20,7 @@ class CustomDataset(Dataset):
 
     def __getitem__(self, idx):
         # get the frame paths
-        frame_paths = [os.path.join(self.img_dir, p) for p in self.frames[idx]]
+        frame_paths = [p for p in self.frames[idx]]
 
         # get the frames
         frames = [read_image(i, ImageReadMode.RGB) for i in frame_paths]
