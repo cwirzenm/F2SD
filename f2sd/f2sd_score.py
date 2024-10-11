@@ -13,7 +13,7 @@ from residual2plus1 import R2Plus1D
 from dataset_generator import DatasetGenerator
 
 
-def _compute_activation(vids, model, batch_size=32, dims=512, cuda=True):
+def _compute_activation(vids, model, dims, cuda=True):
     """Calculates the activations of the pool_3 layer of the model for all frames"""
 
     model.eval()
@@ -25,7 +25,6 @@ def _compute_activation(vids, model, batch_size=32, dims=512, cuda=True):
         features = []
         dataloader = DataLoader(
                 vids,
-                batch_size=batch_size,
                 shuffle=False
         )
         for videos in dataloader:
@@ -95,32 +94,25 @@ def _calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
     return diff.dot(diff) + np.trace(sigma1) + np.trace(sigma2) - 2 * np.trace(covmean)
 
 
-def fsd_score(data: tuple[Dataset, Dataset], batch_size=32, dims=512, cuda=True) -> float:
-    ground_truth, generated = data
+def _fsd_score(data: tuple[Dataset, Dataset], dims=512, cuda=True) -> float:
+    reference, generated = data
     model = R2Plus1D()
 
-    m1, s1 = _compute_activation(ground_truth, model, batch_size, dims, cuda)
-    m2, s2 = _compute_activation(generated, model, batch_size, dims, cuda)
+    m1, s1 = _compute_activation(reference, model, dims, cuda)
+    m2, s2 = _compute_activation(generated, model, dims, cuda)
     fid_value = _calculate_frechet_distance(m1, s1, m2, s2)
 
     return fid_value
 
 
-def fsd_score_without_gt(root: str, **kwargs) -> float:
+def f2sd_score(root: str, **kwargs) -> float:
     results: list[float] = []
     for dir in os.listdir(root):
-        with DatasetGenerator(os.path.join(root, dir), **kwargs) as tup:
-            fid: float = fsd_score(tup)
-            results.append(np.mean(fid))
-            # print(f"{dir} FSD score: {np.mean(fid)}")
+        dataset: list[float] = []
+        generator = DatasetGenerator(os.path.join(root, dir), **kwargs)
+        for tup in generator:
+            fsd: float = _fsd_score(tup)
+            dataset.append(fsd)
+        results.append(np.mean(dataset))
+        print(f"{dir} F2SD score: {np.mean(dataset)}")
     return np.mean(results)
-
-
-if __name__ == "__main__":
-    from dataset import CustomDataset
-
-    set1_dataset2 = CustomDataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test2\\set_1")
-    set2_dataset2 = CustomDataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test2\\set_2")
-
-    fsd_value2 = fsd_score((set1_dataset2, set2_dataset2))
-    print('Test 2 FSD:', fsd_value2)

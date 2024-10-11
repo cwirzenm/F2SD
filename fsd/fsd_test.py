@@ -46,3 +46,8 @@ if __name__ == '__main__':
     arldm_gt_vist = custom_dataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\fsd_data\\arldm\\gt_vist")
     fsd_arldm_vist = fsd_score((arldm_gt_vist, arldm_gen_vist))
     print('AR-LDM FSD score on VIST-SIS:', fsd_arldm_vist)
+
+    noise_1 = custom_dataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\f2sd_data\\noise\\gt_vist")
+    noise_2 = custom_dataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\f2sd_data\\noise\\noise_1")
+    fsd_noise = fsd_score((noise_1, noise_2))
+    print('Noise FSD score:', fsd_noise)

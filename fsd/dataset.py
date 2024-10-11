@@ -1,16 +1,14 @@
 import os
 import torch
-import functools
 from torchvision.io import read_image, ImageReadMode
-from torchvision.transforms.v2 import Resize, Compose, ToImage, ToDtype, Normalize
+from torchvision.transforms.v2 import Resize, Compose, ToDtype, Normalize
 from torch.utils.data import Dataset
 
 
 class CustomDataset(Dataset):
-    def __init__(self, img_dir, res=(64, 64), backsub=False, verbose=False):
+    def __init__(self, img_dir, res=(64, 64), verbose=False):
         self.img_dir = img_dir
         self.res = res
-        self.backsub = backsub if backsub else lambda x, y: y
         self.verbose = verbose
         self.frames = [[os.path.join(r, x) for x in f] for r, d, f in os.walk(img_dir) if f]
 
@@ -26,7 +24,7 @@ class CustomDataset(Dataset):
         frames = [read_image(i, ImageReadMode.RGB) for i in frame_paths]
 
         # transform the frames
-        vid = [self.transform(p)(f) for f, p in zip(frames, frame_paths)]  # each frame must be (C, H, W)
+        vid = [self.transform()(f) for f in frames]  # each frame must be (C, H, W)
 
         # double-check the shape
         assert vid[0].shape[0] == 3, f"Wrong shape {vid[0].shape}. The shape ought to be (3, 64, 64)"
@@ -39,19 +37,9 @@ class CustomDataset(Dataset):
         if self.verbose: print(f"{img.shape} {type(img)}")
         return img
 
-    def transform(self, img_path) -> Compose:
+    def transform(self) -> Compose:
         return Compose([
                 self.print_shape,
-
-                # apply background subtraction if applicable
-                functools.partial(self.backsub, img_path),
-                self.print_shape,
-
-                # convert to tensor (really only needed for backsub)
-                ToImage(),
-                self.print_shape,
-
-                # RandomRotation((20, 40)),
 
                 # models like floats
                 ToDtype(torch.float32, scale=True),
