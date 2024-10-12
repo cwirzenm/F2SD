@@ -1,7 +1,7 @@
 """
-Calculates the Fréchet Story Distance (FSD) to evaluate consistency in the sequence of images
+Calculates the Fréchet Subject Similarity Distance (F2SD) to evaluate consistency in the sequence of images
 
-Code adapted from https://github.com/bioinf-jku/TTUR
+Code adapted from the Fréchet Story Distance (FSD) implementation from https://github.com/bioinf-jku/TTUR
 """
 import os
 import numpy as np
@@ -13,7 +13,7 @@ from residual2plus1 import R2Plus1D
 from dataset_generator import DatasetGenerator
 
 
-def _compute_activation(vids, model, dims, cuda=True):
+def _compute_activation(vids, model, dims, cuda=True) -> tuple[np.ndarray, np.ndarray]:
     """Calculates the activations of the pool_3 layer of the model for all frames"""
 
     model.eval()
@@ -28,8 +28,8 @@ def _compute_activation(vids, model, dims, cuda=True):
                 shuffle=False
         )
         for videos in dataloader:
-            videos = videos.type(torch.FloatTensor).to(device)
-            activation = model(videos)
+            videos: torch.Tensor = videos.type(torch.FloatTensor).to(device)
+            activation: torch.Tensor = model(videos)
             if activation.shape[2] != 1 or activation.shape[3] != 1:
                 activation = F.adaptive_avg_pool2d(activation, output_size=(1, 1))
             features.append(activation.cpu().numpy().reshape(-1, dims))
@@ -40,9 +40,8 @@ def _compute_activation(vids, model, dims, cuda=True):
     return mu, sigma
 
 
-def _calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
+def _calculate_frechet_distance(mu1: np.ndarray, sigma1: np.ndarray, mu2: np.ndarray, sigma2: np.ndarray, eps=1e-6) -> float:
     """
-    TODO
     Numpy implementation of the Fréchet Distance.
     The Fréchet distance between two multivariate Gaussian distributions:
         X_1 ~ N(μ_1, C_1)
@@ -100,19 +99,19 @@ def _fsd_score(data: tuple[Dataset, Dataset], dims=512, cuda=True) -> float:
 
     m1, s1 = _compute_activation(reference, model, dims, cuda)
     m2, s2 = _compute_activation(generated, model, dims, cuda)
-    fid_value = _calculate_frechet_distance(m1, s1, m2, s2)
+    fid_value: float = _calculate_frechet_distance(m1, s1, m2, s2)
 
     return fid_value
 
 
 def f2sd_score(root: str, **kwargs) -> float:
     results: list[float] = []
-    for dir in os.listdir(root):
+    for data in os.listdir(root):
         dataset: list[float] = []
-        generator = DatasetGenerator(os.path.join(root, dir), **kwargs)
+        generator = DatasetGenerator(os.path.join(root, data), **kwargs)
         for tup in generator:
             fsd: float = _fsd_score(tup)
             dataset.append(fsd)
         results.append(np.mean(dataset))
-        print(f"{dir} F2SD score: {np.mean(dataset)}")
+        print(f"{data} F2SD score: {np.mean(dataset)}")
     return np.mean(results)

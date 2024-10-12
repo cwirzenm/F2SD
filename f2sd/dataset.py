@@ -6,35 +6,34 @@ from torch.utils.data import Dataset
 
 
 class CustomDataset(Dataset):
-    def __init__(self, img_dir, res=(256, 256), seq_length=4, verbose=False):
-        self.img_dir = img_dir
-        self.res = res
-        self.seq_length = seq_length
-        self.verbose = verbose
-        self.frames = [[os.path.join(r, x) for x in f] for r, d, f in os.walk(img_dir) if f]
+    def __init__(self, img_dir: str, res=(256, 256), verbose=False):
+        self.img_dir: str = img_dir
+        self.res: tuple = res
+        self.verbose: bool = verbose
+        self.frames: list = [[os.path.join(r, x) for x in f] for r, d, f in os.walk(img_dir) if f]
 
-    def __str__(self): return str(self.frames)
+    def __str__(self) -> str: return str(self.frames)
 
-    def __len__(self): return len(self.frames)
+    def __len__(self) -> int: return len(self.frames)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> torch.Tensor:
         # get the frame paths
-        frame_paths = [p for p in self.frames[idx]]
+        frame_paths: list[str] = [p for p in self.frames[idx]]
 
         # get the frames
-        frames = [read_image(i, ImageReadMode.RGB) for i in frame_paths]
+        frames: list[torch.Tensor] = [read_image(i, ImageReadMode.RGB) for i in frame_paths]
 
         # transform the frames
-        vid = [self.transform()(f) for f in frames]  # each frame must be (C, H, W)
+        vid: list[torch.Tensor] = [self.transform()(f) for f in frames]  # each frame must be (C, H, W)
 
         # double-check the shape
         assert vid[0].shape[0] == 3, f"Wrong shape {vid[0].shape}. The shape ought to be (3, 64, 64)"
 
         # stack and move channels to the first axis
-        vid = torch.stack(vid).permute(1, 0, 2, 3)  # (C, T, H, W)
+        vid: torch.Tensor = torch.stack(vid).permute(1, 0, 2, 3)  # (C, T, H, W)
         return vid
 
-    def print_shape(self, img):
+    def print_shape(self, img) -> torch.Tensor:
         if self.verbose: print(f"{img.shape} {type(img)}")
         return img
 
@@ -46,11 +45,3 @@ class CustomDataset(Dataset):
                 # standard normalisation for R(2+1)D model
                 Normalize(mean=[0.43216, 0.394666, 0.37645], std=[0.22803, 0.22145, 0.216989]),
         ])
-
-
-if __name__ == "__main__":
-    test1_dataset = CustomDataset(
-            "C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test2\\set_2",
-            verbose=True
-    )
-    a = [b for b in test1_dataset]
