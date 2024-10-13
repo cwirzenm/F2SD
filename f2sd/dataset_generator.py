@@ -34,8 +34,20 @@ class DatasetGenerator:
             os.chdir(self.cwd)
             raise StopIteration
 
-        old_files: list = glob.glob('target/*')
-        for f in old_files: os.remove(f)
+        old_targets: list = glob.glob('target/*')
+        for f in old_targets: os.remove(f)
+
+        # todo work on this
+        # final chunk may be smaller than sequence length therefore we need to make sure the source folder size is the same
+        old_source: list = glob.glob('source/*')
+        curr_chunk_size = len(self.chunks[self.counter])
+        temp_counter = 0
+        for f in old_source:
+            if (len(old_source) - temp_counter) == curr_chunk_size:
+                break
+            os.remove(f)
+            temp_counter += 1
+
         for t in self.chunks[self.counter]:
             shutil.copy2(t, 'target/')
 

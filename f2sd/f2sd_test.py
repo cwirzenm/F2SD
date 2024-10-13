@@ -1,10 +1,23 @@
 from f2sd_score import f2sd_score
+from yolov8x import YoloV8X
+from residual2plus1 import R2Plus1D
 import functools
 
 
 if __name__ == '__main__':
-    seq_length = 3
-    f2sd_func = functools.partial(f2sd_score, seq_length=seq_length)
+    SEQ_LENGTH = 3
+
+    # MODEL = YoloV8X()
+    # RESOLUTION = (640, 640)
+    # DIMS = 640
+    # MODE = 'YOLO'
+
+    MODEL = R2Plus1D()
+    RESOLUTION = (256, 256)
+    DIMS = 512
+    MODE = 'R2+1D'
+
+    f2sd_func = functools.partial(f2sd_score, seq_length=SEQ_LENGTH, model=MODEL, dims=DIMS, res=RESOLUTION, mode=MODE)
 
     consistory = "C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\f2sd_data\\consistory"
     f2sd_consistory = f2sd_func(consistory)

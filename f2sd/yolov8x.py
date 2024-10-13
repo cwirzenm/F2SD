@@ -1,7 +1,5 @@
-import numpy as np
-from ultralytics.utils.plotting import Annotator, colors
 from ultralytics import YOLO
-from torchvision.transforms.v2 import Compose, Normalize, ToDtype, Resize, ToImage
+from torchvision.transforms.v2 import Compose, ToDtype, Resize
 from torchvision.io import read_image, ImageReadMode
 import matplotlib.pyplot as plt
 import torch
@@ -12,10 +10,7 @@ import os
 class YoloV8X:
     def __init__(self):
         self.detection_model = YOLO('lib/yolov8x.pt')
-        self.detection_model.to('cuda')
-
         self.embedding_model = YOLO('lib/yolov8x.pt')
-        self.embedding_model.to('cuda')
 
         # set model parameters
         self.detection_model.multi_label = False  # NMS multiple labels per box
@@ -26,18 +21,17 @@ class YoloV8X:
                 Resize((640, 640), antialias=True),
         ])
 
-        frames = preprocess(frames)
-        # frames = preprocess(frames).unsqueeze(0)
+        frames = preprocess(frames).flatten(start_dim=0, end_dim=1)
 
         # inference with test time augmentation
         results = self.detection_model(
                 frames,
-                imgsz=1280,
+                imgsz=640,
                 augment=True,
                 conf=0.6,
                 iou=0.45,
                 max_det=100,
-                visualize=True,
+                verbose=False
                 # classes= todo list of classes
         )
 
@@ -45,7 +39,6 @@ class YoloV8X:
         for idx, result in enumerate(results):
             if show: result.show()
 
-            # todo why is it grayscale?
             boxes = result.boxes.data
             scores = result.boxes.conf
             categories = result.boxes.cls
@@ -60,10 +53,14 @@ class YoloV8X:
 
                 # crop image and return
                 cropped_frame = frames[idx][:, int(box[1]): int(box[3]), int(box[0]): int(box[2])]
+                cropped_frames.append(cropped_frame)
+
                 if show:
                     # convert from BGR to RGB for the image to be correctly displayed using plt
                     plt.imshow(cv2.cvtColor(cropped_frame.permute(1, 2, 0).numpy(), cv2.COLOR_BGR2RGB))
 
+        resize_func = Resize((256, 256))
+        cropped_frames = [resize_func(f) for f in cropped_frames]
         cropped_frames = torch.stack(cropped_frames)
 
         # self.activations = {}
@@ -85,10 +82,10 @@ class YoloV8X:
                 imgsz=256,
                 agnostic_nms=True,
                 retina_masks=True,
+                verbose=False,
                 embed=[21]
         )
-        # todo to unsqueeze or not to unsqueeze????
-        embeddings = embeddings[0].unsqueeze(0).cpu().numpy()
+        embeddings = torch.stack(embeddings)
         return embeddings
 
     # def get_forward_hook(self, layer):
@@ -98,6 +95,20 @@ class YoloV8X:
     #             layer_activations.append(activation.detach())
     #         self.activations[layer] = layer_activations
     #     return hook
+
+    def eval(self):
+        # need to manually set the models to `training` = False due to yolo's `eval()` being broken and causing training to start
+        self.detection_model.training = False
+        for module in self.detection_model.children():
+            module.training = False
+
+        self.embedding_model.training = False
+        for module in self.embedding_model.children():
+            module.training = False
+
+    def to(self, device):
+        self.detection_model.to(device)
+        self.embedding_model.to(device)
 
 
 if __name__ == '__main__':
@@ -111,6 +122,8 @@ if __name__ == '__main__':
         img = torch.stack((b, g, r)).squeeze()
         consistory_2.append(img)
     consistory_2 = torch.stack(consistory_2)
+    model.eval()
+    model.to(torch.device('cuda'))
     embeddings_2 = model(consistory_2)
 
     print(embeddings_2)
@@ -123,6 +136,8 @@ if __name__ == '__main__':
         img = torch.stack((b, g, r)).squeeze()
         consistory_1.append(img)
     consistory_1 = torch.stack(consistory_1)
-    embeddings_1 = model(consistory_1, show=True)
+    model.eval()
+    model.to(torch.device('cuda'))
+    embeddings_1 = model(consistory_1)
 
-    # storydalle_flintstones = "C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\f2sd_data\\storydalle\\flintstones"
+    print(embeddings_1)
