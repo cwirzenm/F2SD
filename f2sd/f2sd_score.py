@@ -10,6 +10,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset
 from scipy import linalg
 from residual2plus1 import R2Plus1D
+from yolov8x import YoloV8X
 from dataset_generator import DatasetGenerator
 
 
@@ -93,9 +94,9 @@ def _calculate_frechet_distance(mu1: np.ndarray, sigma1: np.ndarray, mu2: np.nda
     return diff.dot(diff) + np.trace(sigma1) + np.trace(sigma2) - 2 * np.trace(covmean)
 
 
-def _fsd_score(data: tuple[Dataset, Dataset], dims=512, cuda=True) -> float:
+def _fsd_score(data: tuple[Dataset, Dataset], model=R2Plus1D, dims=512, cuda=True) -> float:
     reference, generated = data
-    model = R2Plus1D()
+    model = model()
 
     m1, s1 = _compute_activation(reference, model, dims, cuda)
     m2, s2 = _compute_activation(generated, model, dims, cuda)

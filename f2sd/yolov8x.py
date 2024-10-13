@@ -1,7 +1,8 @@
 import numpy as np
 from ultralytics.utils.plotting import Annotator, colors
 from ultralytics import YOLO
-from torchvision.transforms.v2 import Compose, Normalize, ToDtype, Resize
+from torchvision.transforms.v2 import Compose, Normalize, ToDtype, Resize, ToImage
+from torchvision.io import read_image, ImageReadMode
 import matplotlib.pyplot as plt
 import torch
 import cv2
@@ -9,33 +10,28 @@ import os
 
 
 class YoloV8X:
-    def __init__(self, return_cropped_frame=False):
+    def __init__(self):
         self.detection_model = YOLO('lib/yolov8x.pt')
         self.detection_model.to('cuda')
 
         self.embedding_model = YOLO('lib/yolov8x.pt')
         self.embedding_model.to('cuda')
 
-        self.return_cropped_frame = return_cropped_frame
-
         # set model parameters
         self.detection_model.multi_label = False  # NMS multiple labels per box
 
-    def __call__(self, frame_and_path: tuple, show=False):
+    def __call__(self, frames: torch.Tensor, show=False) -> torch.Tensor:
         preprocess = Compose([
                 ToDtype(torch.float32, scale=True),
                 Resize((640, 640), antialias=True),
-                # Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
 
-        frame = frame_and_path[0]
-        frame = preprocess(frame).unsqueeze(0)
-
-        path = frame_and_path[1]
+        frames = preprocess(frames)
+        # frames = preprocess(frames).unsqueeze(0)
 
         # inference with test time augmentation
-        result = self.detection_model(
-                frame,
+        results = self.detection_model(
+                frames,
                 imgsz=1280,
                 augment=True,
                 conf=0.6,
@@ -43,31 +39,32 @@ class YoloV8X:
                 max_det=100,
                 visualize=True,
                 # classes= todo list of classes
-        )[0]
+        )
 
-        # show detection bounding boxes on image
-        if show: result.show()
+        cropped_frames = []
+        for idx, result in enumerate(results):
+            if show: result.show()
 
-        boxes = result.boxes.data
-        scores = result.boxes.conf
-        categories = result.boxes.cls
+            # todo why is it grayscale?
+            boxes = result.boxes.data
+            scores = result.boxes.conf
+            categories = result.boxes.cls
 
-        if boxes.shape[0] == 0:
-            cropped_frame = frame
-        else:
-            areas = [(int(a[3]) - int(a[1])) * (int(a[2]) - int(a[0])) for a in boxes]
+            if boxes.shape[0] == 0: cropped_frames.append(frames[idx])
+            else:
+                areas = [(int(a[3]) - int(a[1])) * (int(a[2]) - int(a[0])) for a in boxes]
 
-            # picking the object with the highest box area
-            main_idx = int(areas.index(max(areas)))
-            box = boxes[main_idx]
+                # picking the object with the highest box area
+                main_idx = int(areas.index(max(areas)))
+                box = boxes[main_idx]
 
-            # crop image and return
-            cropped_frame = cv2.imread(path)[int(box[1]): int(box[3]), int(box[0]): int(box[2])]
-            # plt.imshow(cropped_frame[..., ::-1])
+                # crop image and return
+                cropped_frame = frames[idx][:, int(box[1]): int(box[3]), int(box[0]): int(box[2])]
+                if show:
+                    # convert from BGR to RGB for the image to be correctly displayed using plt
+                    plt.imshow(cv2.cvtColor(cropped_frame.permute(1, 2, 0).numpy(), cv2.COLOR_BGR2RGB))
 
-        if self.return_cropped_frame: return cropped_frame
-
-        # cropped_frames = np.array(cropped_frames)
+        cropped_frames = torch.stack(cropped_frames)
 
         # self.activations = {}
         # detection_head = self.model.model.model[-1]
@@ -84,13 +81,14 @@ class YoloV8X:
         # rerun interference with a cropped image
         # inference with test time augmentation
         embeddings = self.embedding_model(
-                cropped_frame,
+                cropped_frames,
                 imgsz=256,
                 agnostic_nms=True,
                 retina_masks=True,
                 embed=[21]
-        )[0]
-        embeddings = embeddings.cpu().numpy()
+        )
+        # todo to unsqueeze or not to unsqueeze????
+        embeddings = embeddings[0].unsqueeze(0).cpu().numpy()
         return embeddings
 
     # def get_forward_hook(self, layer):
@@ -105,38 +103,26 @@ class YoloV8X:
 if __name__ == '__main__':
     model = YoloV8X()
 
-    # stock images realistic
-    # ref_path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test3/set_1/row-1-column-1.jpg'
-    # gen_path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test3/set_1/row-1-column-2.jpg'
-    # model(ref_path)    # model(gen_path)
-    #
-    # # stock image vs Tom Hanks
-    # ref_path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test3/set_2/row-1-column-5.jpg'
-    # gen_path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test3/set_2/gettyimages-1257937597.jpg'
-    # model(ref_path)
-    # model(gen_path)
+    consistory_2_path = "C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\f2sd_data\\consistory\\1\\target"
+    consistory_2 = []
+    for i in [os.path.join(consistory_2_path, f) for f in os.listdir(consistory_2_path)]:
+        img = read_image(i, ImageReadMode.RGB)
+        r, g, b = img.split(1, 0)
+        img = torch.stack((b, g, r)).squeeze()
+        consistory_2.append(img)
+    consistory_2 = torch.stack(consistory_2)
+    embeddings_2 = model(consistory_2)
 
-    # Geralt of Rivia
-    # ref_path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test2/set_1/im_1.png'
-    # gen_path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test2/set_1/im_2.png'
-    # x = model(ref_path)
-    # y = model(gen_path)
+    print(embeddings_2)
 
-    path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test2/set_1/'
-    e = model(path)
+    consistory_1_path = "C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\f2sd_data\\consistory\\1\\source"
+    consistory_1 = []
+    for i in [os.path.join(consistory_1_path, f) for f in os.listdir(consistory_1_path)]:
+        img = read_image(i, ImageReadMode.RGB)
+        r, g, b = img.split(1, 0)
+        img = torch.stack((b, g, r)).squeeze()
+        consistory_1.append(img)
+    consistory_1 = torch.stack(consistory_1)
+    embeddings_1 = model(consistory_1, show=True)
 
-    # # Flintstones
-    # ref_path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/temporalstory/gt_flintstones/row-3-column-2.png'
-    # gen_path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/temporalstory/gt_flintstones/row-16-column-4.png'
-    # model(ref_path)
-    # model(gen_path)
-    #
-    # base_path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/test4'
-    # for f in os.listdir(base_path):
-    #     model(os.path.join(base_path, f))
-
-    # base_path = 'C:/Users/mxnaz/OneDrive/Documents/Bath Uni/13 Dissertation/data/tests'
-    # data = model([os.path.join(base_path, f) for f in os.listdir(base_path)], get_activation=True)
-    # for f in os.listdir(base_path):
-    #     tensor = model(os.path.join(base_path, f))
-    # break
+    # storydalle_flintstones = "C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\f2sd_data\\storydalle\\flintstones"

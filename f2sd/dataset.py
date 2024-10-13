@@ -6,9 +6,10 @@ from torch.utils.data import Dataset
 
 
 class CustomDataset(Dataset):
-    def __init__(self, img_dir: str, res=(256, 256), verbose=False):
+    def __init__(self, img_dir: str, res=(256, 256), mode='BGR', verbose=False):
         self.img_dir: str = img_dir
         self.res: tuple = res
+        self.mode: str = mode
         self.verbose: bool = verbose
         self.frames: list = [[os.path.join(r, x) for x in f] for r, d, f in os.walk(img_dir) if f]
 
@@ -21,7 +22,15 @@ class CustomDataset(Dataset):
         frame_paths: list[str] = [p for p in self.frames[idx]]
 
         # get the frames
-        frames: list[torch.Tensor] = [read_image(i, ImageReadMode.RGB) for i in frame_paths]
+        if self.mode == 'RGB':
+            frames: list[torch.Tensor] = [read_image(i, ImageReadMode.RGB) for i in frame_paths]
+        elif self.mode == 'BGR':
+            frames = []
+            for i in frame_paths:
+                r, g, b = read_image(i, ImageReadMode.RGB).split(1, 0)
+                img = torch.stack((b, g, r)).squeeze()
+                frames.append(img)
+        else: raise NotImplementedError
 
         # transform the frames
         vid: list[torch.Tensor] = [self.transform()(f) for f in frames]  # each frame must be (C, H, W)
