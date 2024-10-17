@@ -1,10 +1,8 @@
 from ultralytics import YOLO
 from torchvision.transforms.v2 import Compose, ToDtype, Resize
-from torchvision.io import read_image, ImageReadMode
 import matplotlib.pyplot as plt
 import torch
 import cv2
-import os
 
 
 class YoloV8X:
@@ -32,7 +30,6 @@ class YoloV8X:
                 iou=0.45,
                 max_det=100,
                 verbose=False
-                # classes= todo list of classes
         )
 
         cropped_frames = []
@@ -63,18 +60,6 @@ class YoloV8X:
         cropped_frames = [resize_func(f) for f in cropped_frames]
         cropped_frames = torch.stack(cropped_frames)
 
-        # self.activations = {}
-        # detection_head = self.model.model.model[-1]
-        #
-        # cv2_layer = detection_head.cv2[-1]
-        # cv2_layer.register_forward_hook(self.get_forward_hook('cv2'))
-        #
-        # cv3_layer = detection_head.cv3[-1]
-        # cv3_layer.register_forward_hook(self.get_forward_hook('cv3'))
-        #
-        # dfl_layer = detection_head.dfl
-        # dfl_layer.register_forward_hook(self.get_forward_hook('dfl'))
-
         # rerun interference with a cropped image
         # inference with test time augmentation
         embeddings = self.embedding_model(
@@ -85,16 +70,9 @@ class YoloV8X:
                 verbose=False,
                 embed=[21]
         )
-        embeddings = torch.stack(embeddings)
+        # target shape: (n, dims, 1, 1)
+        embeddings = torch.stack(embeddings).unsqueeze(-1).unsqueeze(-1)
         return embeddings
-
-    # def get_forward_hook(self, layer):
-    #     def hook(model, input, output):
-    #         layer_activations = []
-    #         for i, activation in enumerate(output):
-    #             layer_activations.append(activation.detach())
-    #         self.activations[layer] = layer_activations
-    #     return hook
 
     def eval(self):
         # need to manually set the models to `training` = False due to yolo's `eval()` being broken and causing training to start
@@ -109,35 +87,3 @@ class YoloV8X:
     def to(self, device):
         self.detection_model.to(device)
         self.embedding_model.to(device)
-
-
-if __name__ == '__main__':
-    model = YoloV8X()
-
-    consistory_2_path = "C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\f2sd_data\\consistory\\1\\target"
-    consistory_2 = []
-    for i in [os.path.join(consistory_2_path, f) for f in os.listdir(consistory_2_path)]:
-        img = read_image(i, ImageReadMode.RGB)
-        r, g, b = img.split(1, 0)
-        img = torch.stack((b, g, r)).squeeze()
-        consistory_2.append(img)
-    consistory_2 = torch.stack(consistory_2)
-    model.eval()
-    model.to(torch.device('cuda'))
-    embeddings_2 = model(consistory_2)
-
-    print(embeddings_2)
-
-    consistory_1_path = "C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\f2sd_data\\consistory\\1\\source"
-    consistory_1 = []
-    for i in [os.path.join(consistory_1_path, f) for f in os.listdir(consistory_1_path)]:
-        img = read_image(i, ImageReadMode.RGB)
-        r, g, b = img.split(1, 0)
-        img = torch.stack((b, g, r)).squeeze()
-        consistory_1.append(img)
-    consistory_1 = torch.stack(consistory_1)
-    model.eval()
-    model.to(torch.device('cuda'))
-    embeddings_1 = model(consistory_1)
-
-    print(embeddings_1)

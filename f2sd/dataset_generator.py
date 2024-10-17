@@ -37,7 +37,6 @@ class DatasetGenerator:
         old_targets: list = glob.glob('target/*')
         for f in old_targets: os.remove(f)
 
-        # todo work on this
         # final chunk may be smaller than sequence length therefore we need to make sure the source folder size is the same
         old_source: list = glob.glob('source/*')
         curr_chunk_size = len(self.chunks[self.counter])
