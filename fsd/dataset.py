@@ -54,11 +54,3 @@ class CustomDataset(Dataset):
                 # standard normalisation for R(2+1)D model
                 Normalize(mean=[0.43216, 0.394666, 0.37645], std=[0.22803, 0.22145, 0.216989]),
         ])
-
-
-if __name__ == "__main__":
-    test1_dataset = CustomDataset(
-            "C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test2\\set_2",
-            verbose=True
-    )
-    a = [b for b in test1_dataset]

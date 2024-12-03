@@ -41,7 +41,6 @@ def _compute_activation(vids, model, batch_size=32, dims=512, cuda=True):
 
 def _calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
     """
-    TODO
     Numpy implementation of the Fréchet Distance.
     The Fréchet distance between two multivariate Gaussian distributions:
         X_1 ~ N(μ_1, C_1)
@@ -102,13 +101,3 @@ def fsd_score(data: tuple[Dataset, Dataset], batch_size=32, dims=512, cuda=True)
     fid_value = _calculate_frechet_distance(m1, s1, m2, s2)
 
     return fid_value
-
-
-if __name__ == "__main__":
-    from dataset import CustomDataset
-
-    set1_dataset2 = CustomDataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test2\\set_1")
-    set2_dataset2 = CustomDataset("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\data\\test2\\set_2")
-
-    fsd_value2 = fsd_score((set1_dataset2, set2_dataset2))
-    print('Test 2 FSD:', fsd_value2)

@@ -52,10 +52,3 @@ class DatasetGenerator:
 
         target_path: str = os.path.join(self.root, 'target')
         return CustomDataset(self.source_path, **self.kwargs), CustomDataset(target_path, **self.kwargs)
-
-
-if __name__ == '__main__':
-    d = DatasetGenerator("C:\\Users\\mxnaz\\OneDrive\\Documents\\Bath Uni\\13 Dissertation\\f2sd_data\\temporalstory\\flintstones\\wilma")
-    for x, y in d:
-        print(x, y)
-    print('done')
